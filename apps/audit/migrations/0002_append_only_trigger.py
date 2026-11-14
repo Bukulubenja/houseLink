@@ -27,7 +27,9 @@ DROP FUNCTION IF EXISTS audit_auditevent_block_mutation();
 def _run_on_postgres(sql: str):
     def run(apps, schema_editor) -> None:
         if schema_editor.connection.vendor == "postgresql":
-            schema_editor.execute(sql)
+            # params=None: send the SQL verbatim. With the default empty params psycopg 3
+            # parses `%` (PL/pgSQL's RAISE placeholder) as a query parameter and fails.
+            schema_editor.execute(sql, params=None)
 
     return run
 
