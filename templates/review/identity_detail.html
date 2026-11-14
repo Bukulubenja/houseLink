@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Review {{ submission.legal_name }}{% endblock %}
+{% block content %}
+  <p><a href="{% url 'review:identity_queue' %}">← Queue</a></p>
+  <h1>{{ submission.legal_name }}</h1>
+  <p class="muted">
+    {{ submission.profile.user.phone }} · NIN ending <strong>{{ submission.nin_last4 }}</strong>
+    · submitted {{ submission.created_at|date:"j M Y H:i" }} · <strong>{{ submission.get_status_display }}</strong>
+  </p>
+  {% if not submission.nin_format_ok %}
+    <p class="notice">NIN does not start with CM/CF. Check it against the card.</p>
+  {% endif %}
+  <p class="small muted">Every image you open here is logged in the audit trail.</p>
+
+  <div class="doc-grid">
+    <figure><img src="{% url 'review:identity_document' submission.pk 'id_front' %}" alt="ID front"><figcaption>ID front</figcaption></figure>
+    <figure><img src="{% url 'review:identity_document' submission.pk 'id_back' %}" alt="ID back"><figcaption>ID back</figcaption></figure>
+    {% if submission.selfie %}
+      <figure><img src="{% url 'review:identity_document' submission.pk 'selfie' %}" alt="Selfie with ID"><figcaption>Selfie with ID</figcaption></figure>
+    {% else %}
+      <figure><p class="muted">Selfie deleted {{ submission.selfie_deleted_at|date:"j M Y" }}</p></figure>
+    {% endif %}
+  </div>
+
+  {% if submission.status == "pending" %}
+    <section class="card">
+      <h2>Decision</h2>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% include "partials/form_errors.html" %}
+        {{ form.decision }}
+        {% for error in form.decision.errors %}<p class="error">{{ error }}</p>{% endfor %}
+        <label for="{{ form.reason.id_for_label }}">Reason</label>
+        {{ form.reason }}
+        {% for error in form.reason.errors %}<p class="error">{{ error }}</p>{% endfor %}
+        <label for="{{ form.note.id_for_label }}">{{ form.note.label }}</label>
+        {{ form.note }}
+        <p class="small muted">"Confirmed fraud" permanently bans this NIN and phone number.</p>
+        <button class="button" type="submit">Save decision</button>
+      </form>
+    </section>
+  {% else %}
+    <p>Decided by {{ submission.reviewed_by }} on {{ submission.reviewed_at|date:"j M Y H:i" }}
+      {% if submission.reason %}— {{ submission.get_reason_display }}{% endif %}.</p>
+  {% endif %}
+
+  {% if history %}
+    <h2>Earlier applications</h2>
+    <ul>{% for old in history %}
+      <li>{{ old.created_at|date:"j M Y" }} — {{ old.get_status_display }}{% if old.reason %} ({{ old.get_reason_display }}){% endif %}</li>
+    {% endfor %}</ul>
+  {% endif %}
+{% endblock %}

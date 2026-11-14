@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Verify your identity{% endblock %}
+{% block content %}
+  <section class="card narrow">
+    <h1>Verify your identity</h1>
+
+    {% if latest and latest.status == "needs_info" %}
+      <p class="notice">We need a little more before we can verify you:
+        <strong>{{ latest.get_reason_display }}</strong>. Please send your details again.</p>
+    {% elif latest and latest.status == "rejected" %}
+      <p class="notice">Your last application was not approved ({{ latest.get_reason_display }}).
+        You can apply again with valid documents.</p>
+    {% endif %}
+
+    <details class="consent" open>
+      <summary>Why we ask for your ID</summary>
+      <p class="small">Before we list a home, we confirm who has the right to offer it, so
+        customers can view it with confidence. Only the Crib Link super admin can see your ID photos; every view is logged.
+        We keep only the last 4 characters of your NIN in readable form, and we delete your
+        selfie 90 days after approval. You can ask us what we hold about you at any time.</p>
+    </details>
+
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      {% include "partials/form_errors.html" %}
+      {% for field in form %}
+        {% if field.name == "consent" %}
+          <label class="check">{{ field }} {{ field.label }}</label>
+        {% else %}
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+        {% endif %}
+        {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+      {% endfor %}
+      <button class="button" type="submit">Send for review</button>
+    </form>
+  </section>
+{% endblock %}

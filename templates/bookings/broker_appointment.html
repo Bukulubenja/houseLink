@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ appointment.reference }}{% endblock %}
+{% block content %}
+  <section class="card narrow">
+    <h1>{{ appointment.reference }}</h1>
+    <p><strong>{{ appointment.scheduled_start|date:"D j M, H:i" }}</strong>
+      <span class="badge">{{ appointment.get_status_display }}</span></p>
+    <p>{{ appointment.property.title }}, {{ appointment.property.area }}</p>
+    {% if appointment.status == "booked" %}
+      <h2>Customer</h2>
+      <p>{{ appointment.customer.full_name|default:"Customer" }} · <a href="tel:{{ appointment.customer.phone }}">{{ appointment.customer.phone }}</a></p>
+      <h2>Directions</h2>
+      <p class="small">{{ appointment.property.directions|linebreaksbr }}</p>
+      {% if not appointment.checked_in_at %}
+        <p class="small">Access contact: {{ appointment.property.contact.name }} ·
+          <a href="tel:{{ appointment.property.contact.phone }}">{{ appointment.property.contact.phone }}</a></p>
+      {% endif %}
+    {% else %}
+      <p class="small muted">Report filed. Contact details are no longer shown.</p>
+    {% endif %}
+
+    {% if appointment.status == "booked" %}
+      {% include "partials/form_errors.html" %}
+      {% if not appointment.checked_in_at %}
+        <form method="post">{% csrf_token %}
+          <input type="hidden" name="action" value="check_in">
+          <button class="button" type="submit">I have arrived: check in</button>
+        </form>
+      {% else %}
+        <p><span class="badge badge-ok">Checked in {{ appointment.checked_in_at|date:"H:i" }}</span></p>
+        <h2>Viewing report</h2>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="action" value="report">
+          {% for field in form %}{% include "partials/field.html" %}{% endfor %}
+          <button class="button" type="submit">Submit report</button>
+        </form>
+      {% endif %}
+    {% endif %}
+  </section>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "ops/base.html" %}
+{% load humanize %}
+{% block title %}Finance{% endblock %}
+{% block ops %}
+  <h1>Finance</h1>
+
+  <section class="card narrow">
+    <h2>Record a mobile-money payment</h2>
+    <p class="small muted">Only record a transaction you can see on the merchant statement, quoting the booking reference.</p>
+    <form method="post" action="{% url 'ops:record_payment' %}" novalidate>{% csrf_token %}
+      {% with form=payment_form %}{% include "partials/form_fields.html" %}{% endwith %}
+      <button class="button" type="submit">Record payment</button>
+    </form>
+  </section>
+
+  <h2>Awaiting payment ({{ awaiting|length }})</h2>
+  <ul class="queue">{% for a in awaiting %}
+    <li class="card queue-item"><strong>{{ a.reference }}</strong> UGX {{ a.fee_ugx|intcomma }} · {{ a.customer.phone }} · due {{ a.payment_due_at|date:"D H:i" }}</li>
+  {% empty %}<li class="muted">None.</li>{% endfor %}</ul>
+
+  {% if mismatches %}
+    <h2>Amount mismatches</h2>
+    <ul class="queue">{% for p in mismatches %}
+      <li class="card queue-item"><strong>{{ p.reference }}</strong> for {{ p.appointment.reference }}: expected {{ p.amount_ugx|intcomma }}, received {{ p.amount_received_ugx|intcomma }}
+        {% if p.recorded_by_id != request.user.pk %}
+        <form method="post" action="{% url 'ops:resolve_payment' p.pk %}" class="inline">{% csrf_token %}
+          {{ resolve_form.decision }} {{ resolve_form.note }} <button class="link-button" type="submit">Settle</button></form>
+        {% else %}<span class="small muted">another finance person settles this</span>{% endif %}</li>
+    {% endfor %}</ul>
+  {% endif %}
+
+  <h2>Refunds to pay out ({{ refunds|length }})</h2>
+  <ul class="queue">{% for r in refunds %}
+    <li class="card queue-item"><strong>{{ r.payment.appointment.reference }}</strong> UGX {{ r.amount_ugx|intcomma }} · {{ r.reason }}
+      <span class="small muted">requested by {{ r.requested_by|default:"system" }}</span>
+      <form method="post" action="{% url 'ops:pay_refund' r.pk %}" class="inline">{% csrf_token %}
+        {{ payout_form.payout_ref }} <button class="link-button" type="submit">Mark paid</button></form></li>
+  {% empty %}<li class="muted">None.</li>{% endfor %}</ul>
+
+  <h2>Payments to reconcile ({{ unreconciled|length }})</h2>
+  <ul class="queue">{% for p in unreconciled %}
+    <li class="card queue-item"><strong>{{ p.reference }}</strong> {{ p.appointment.reference }} · UGX {{ p.amount_ugx|intcomma }} · txn {{ p.provider_txn_id }}
+      {% if p.recorded_by %}<span class="small muted">recorded by {{ p.recorded_by }}</span>{% endif %}
+      <form method="post" action="{% url 'ops:reconcile_payment' p.pk %}" class="inline">{% csrf_token %}
+        {{ reconcile_form.statement_ref }} <button class="link-button" type="submit">Reconcile</button></form></li>
+  {% empty %}<li class="muted">None.</li>{% endfor %}</ul>
+{% endblock %}

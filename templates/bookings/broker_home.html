@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}My assignments{% endblock %}
+{% block content %}
+  <h1>My assignments</h1>
+  <h2>Booked</h2>
+  {% if upcoming %}
+    <ul class="queue">
+      {% for a in upcoming %}
+        <li class="card queue-item">
+          <a href="{% url 'broker:appointment' a.pk %}"><strong>{{ a.scheduled_start|date:"D j M, H:i" }}</strong></a>
+          <span>{{ a.reference }} · {{ a.property.title }} · {{ a.property.area }}</span>
+          {% if a.checked_in_at %}<span class="badge badge-ok">Checked in</span>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}<p class="muted">No booked viewings.</p>{% endif %}
+
+  <h2>Held for you, awaiting customer payment</h2>
+  {% if pending_payment %}
+    <ul class="queue">{% for a in pending_payment %}
+      <li class="card queue-item">{{ a.scheduled_start|date:"D j M, H:i" }} · {{ a.property.area }}
+        <span class="small muted">details appear once paid</span></li>
+    {% endfor %}</ul>
+  {% else %}<p class="muted">None.</p>{% endif %}
+{% endblock %}

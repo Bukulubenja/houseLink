@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Viewing {{ appointment.reference }}{% endblock %}
+{% block content %}
+  <section class="card narrow">
+    <h1>Viewing {{ appointment.reference }}</h1>
+    <p><span class="badge">{{ appointment.get_status_display }}</span></p>
+    <p>{{ appointment.property.title }} · {{ appointment.property.area }}</p>
+
+    {% if appointment.status == "requested" %}
+      <p class="muted">You asked for {{ appointment.preferred_start|date:"D j M, H:i" }}. We're
+        checking access and a broker. This is a <strong>request, not a confirmed booking</strong>.
+        Nothing to pay yet.</p>
+    {% elif appointment.status == "awaiting_payment" %}
+      <p>Confirmed time: <strong>{{ appointment.scheduled_start|date:"D j M, H:i" }}</strong></p>
+      <p>Pay <strong>UGX {{ appointment.fee_ugx|intcomma }}</strong> by
+        {{ appointment.payment_due_at|date:"D j M, H:i" }} to secure it; after that the slot is released.</p>
+      <p class="notice">{{ instructions }}</p>
+      {% if has_checkout %}
+        <form method="post" action="{% url 'bookings:pay' appointment.pk %}">{% csrf_token %}
+          <button class="button" type="submit">Pay now</button></form>
+      {% endif %}
+      <p class="small muted">We mark it paid only after the payment provider confirms your payment.</p>
+    {% elif appointment.status == "booked" %}
+      <p>Booked for <strong>{{ appointment.scheduled_start|date:"D j M, H:i" }}</strong>.</p>
+      <p>Your broker: <strong>{{ appointment.broker.user.full_name|default:"a Crib Link broker" }}</strong>. They'll meet you at the
+        property; we'll text you a reminder beforehand.</p>
+    {% elif appointment.status == "completed" %}
+      <p>Viewed on {{ appointment.scheduled_start|date:"j M Y" }}. Thanks for viewing with us.</p>
+    {% elif appointment.closed_reason %}
+      <p class="muted">{{ appointment.get_closed_reason_display }}</p>
+    {% endif %}
+
+    {% if appointment.is_open %}
+      <form method="post" action="{% url 'bookings:cancel' appointment.pk %}">
+        {% csrf_token %}
+        <p class="small muted">
+          {% if appointment.status == "booked" %}
+            {% if refund_on_cancel %}Cancelling now gets you a full refund.{% else %}It's less than
+              {{ cutoff_hours }} hours to the viewing, so cancelling now isn't refunded.{% endif %}
+          {% else %}You haven't paid, so cancelling costs nothing.{% endif %}
+        </p>
+        <button class="link-button" type="submit">Cancel this viewing</button>
+      </form>
+    {% endif %}
+
+    {% if feedback_form %}
+      <h2>How did it go?</h2>
+      <form method="post" action="{% url 'bookings:feedback' appointment.pk %}">
+        {% csrf_token %}
+        {% with form=feedback_form %}{% include "partials/form_fields.html" %}{% endwith %}
+        <button class="button" type="submit">Send feedback</button>
+      </form>
+    {% endif %}
+
+    {% if support_phone %}<p class="small muted">Questions? Call or WhatsApp {{ support_phone }} and quote {{ appointment.reference }}.</p>{% endif %}
+  </section>
+{% endblock %}

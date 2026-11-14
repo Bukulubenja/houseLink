@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}My viewings{% endblock %}
+{% block content %}
+  <h1>My viewings</h1>
+  {% if appointments %}
+    <ul class="queue">
+      {% for a in appointments %}
+        <li class="card queue-item">
+          <a href="{% url 'bookings:detail' a.pk %}"><strong>{{ a.reference }}</strong></a>
+          <span>{{ a.property.title }}</span>
+          <span class="badge">{{ a.get_status_display }}</span>
+          <span class="small muted">{% if a.scheduled_start %}{{ a.scheduled_start|date:"D j M, H:i" }}{% else %}asked for {{ a.preferred_start|date:"D j M, H:i" }}{% endif %}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">No viewings yet. <a href="{% url 'listings:list' %}">Browse available homes</a>.</p>
+  {% endif %}
+{% endblock %}

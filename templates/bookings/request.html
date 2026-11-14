@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Request a viewing{% endblock %}
+{% block content %}
+  <section class="card narrow">
+    <h1>Request a viewing</h1>
+    <p class="muted">{{ property.title }} · {{ property.area }}</p>
+    <ol class="small">
+      <li>Send your preferred time. <strong>Nothing to pay yet.</strong></li>
+      <li>We confirm access and a broker, then text you the confirmed time.</li>
+      <li>Pay the viewing fee of <strong>UGX {{ fee|intcomma }}</strong> to secure it. Your booking
+        is confirmed once the payment provider confirms the payment.</li>
+    </ol>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "partials/form_fields.html" %}
+      <button class="button" type="submit">Send request</button>
+    </form>
+  </section>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}ID review queue{% endblock %}
+{% block content %}
+  <h1>ID review queue <span class="muted">({{ page.paginator.count }} waiting)</span></h1>
+  {% if page.object_list %}
+    <ul class="queue">
+      {% for item in page.object_list %}
+        <li class="card queue-item{% if item.created_at < overdue_before %} overdue{% endif %}">
+          <a href="{% url 'review:identity_detail' item.pk %}"><strong>{{ item.legal_name }}</strong></a>
+          <span class="muted small">{{ item.profile.user.phone }} · NIN …{{ item.nin_last4 }}
+            · waiting {{ item.created_at|timesince }}</span>
+          {% if item.created_at < overdue_before %}<span class="badge badge-warn">Over 24 h</span>{% endif %}
+          {% if not item.nin_format_ok %}<span class="badge badge-warn">Unusual NIN format</span>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+    {% if page.has_other_pages %}
+      <p>{% if page.has_previous %}<a href="?page={{ page.previous_page_number }}">Newer</a>{% endif %}
+         Page {{ page.number }} of {{ page.paginator.num_pages }}
+         {% if page.has_next %}<a href="?page={{ page.next_page_number }}">Older</a>{% endif %}</p>
+    {% endif %}
+  {% else %}
+    <p class="muted">Nothing waiting. 🎉</p>
+  {% endif %}
+{% endblock %}

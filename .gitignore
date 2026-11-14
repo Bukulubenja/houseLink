@@ -1,0 +1,18 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+db.sqlite3
+media/
+private_media/
+staticfiles/
+.test_media/
+.test_private_media/
+.coverage
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+*.jfif
+
+# Business documents stay out of the repo
+*.pdf

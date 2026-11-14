@@ -1,0 +1,25 @@
+{% extends "ops/base.html" %}
+{% block title %}Brokers{% endblock %}
+{% block ops %}
+  <h1>Brokers</h1>
+  <table class="table">
+    <thead><tr><th>Broker</th><th>Phone</th><th>Areas</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      {% for b in brokers %}
+        <tr><td>{{ b.user }}</td><td>{{ b.user.phone }}</td><td class="small">{{ b.areas|join:", " }}</td>
+          <td><span class="badge">{{ b.get_status_display }}</span></td>
+          <td><form method="post" action="{% url 'ops:broker_status' b.pk %}" class="inline">{% csrf_token %}
+            {{ status_form.status }} {{ status_form.reason }} <button class="link-button" type="submit">Update</button></form></td></tr>
+      {% empty %}<tr><td colspan="5" class="muted">No brokers yet.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+
+  <section class="card narrow">
+    <h2>Onboard a broker</h2>
+    <p class="small muted">Check their national ID in person and get the written broker agreement signed first.</p>
+    <form method="post" novalidate>{% csrf_token %}
+      {% include "partials/form_fields.html" %}
+      <button class="button" type="submit">Onboard</button>
+    </form>
+  </section>
+{% endblock %}

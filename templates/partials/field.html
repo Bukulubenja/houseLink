@@ -1,0 +1,9 @@
+{% if field.is_hidden %}{{ field }}{% elif field.widget_type == "checkbox" %}
+  <label class="check">{{ field }} {{ field.label }}</label>
+  {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+{% else %}
+  <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+  {{ field }}
+  {% if field.help_text %}<p class="small muted">{{ field.help_text }}</p>{% endif %}
+  {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+{% endif %}

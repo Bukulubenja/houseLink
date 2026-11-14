@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+  <nav class="subnav">
+    <a href="{% url 'ops:dashboard' %}">Dashboard</a>
+    <a href="{% url 'ops:property_list' %}">Listings</a>
+    <a href="{% url 'ops:booking_queue' %}">Bookings</a>
+    <a href="{% url 'ops:broker_list' %}">Brokers</a>
+    <a href="{% url 'ops:finance' %}">Finance</a>
+  </nav>
+  {% block ops %}{% endblock %}
+{% endblock %}

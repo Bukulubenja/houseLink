@@ -1,0 +1,29 @@
+{% extends "ops/base.html" %}
+{% block title %}Booking desk{% endblock %}
+{% block ops %}
+  <h1>Booking desk</h1>
+  <h2>New requests ({{ requested|length }})</h2>
+  <ul class="queue">
+    {% for a in requested %}
+      <li class="card queue-item"><a href="{% url 'ops:booking_detail' a.pk %}"><strong>{{ a.reference }}</strong></a>
+        <span>{{ a.property.title }}</span>
+        <span class="small muted">wants {{ a.preferred_start|date:"D j M H:i" }} · waiting {{ a.created_at|timesince }}</span></li>
+    {% empty %}<li class="muted">None.</li>{% endfor %}
+  </ul>
+  <h2>Awaiting payment ({{ awaiting_payment|length }})</h2>
+  <ul class="queue">
+    {% for a in awaiting_payment %}
+      <li class="card queue-item"><a href="{% url 'ops:booking_detail' a.pk %}"><strong>{{ a.reference }}</strong></a>
+        <span>{{ a.scheduled_start|date:"D j M H:i" }} · {{ a.broker }}</span>
+        <span class="small muted">due {{ a.payment_due_at|date:"D H:i" }}</span></li>
+    {% empty %}<li class="muted">None.</li>{% endfor %}
+  </ul>
+  <h2>Booked ({{ booked|length }})</h2>
+  <ul class="queue">
+    {% for a in booked %}
+      <li class="card queue-item"><a href="{% url 'ops:booking_detail' a.pk %}"><strong>{{ a.reference }}</strong></a>
+        <span>{{ a.scheduled_start|date:"D j M H:i" }} · {{ a.property.title }} · {{ a.broker }}</span>
+        {% if a.checked_in_at %}<span class="badge badge-ok">Broker checked in</span>{% endif %}</li>
+    {% empty %}<li class="muted">None.</li>{% endfor %}
+  </ul>
+{% endblock %}

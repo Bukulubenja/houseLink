@@ -1,0 +1,54 @@
+{% extends "ops/base.html" %}
+{% load humanize %}
+{% block title %}{{ appointment.reference }}{% endblock %}
+{% block ops %}
+  <h1>{{ appointment.reference }} <span class="badge">{{ appointment.get_status_display }}</span></h1>
+  <p>Customer: {{ appointment.customer }} · {{ appointment.customer.phone }}</p>
+  <p>Property: <a href="{% url 'ops:property_detail' appointment.property.pk %}">{{ appointment.property.title }}</a>
+    ({{ appointment.property.get_status_display }}) · access contact {{ appointment.property.contact.name }} {{ appointment.property.contact.phone }}</p>
+  <p class="small">Asked for {{ appointment.preferred_start|date:"D j M H:i" }}{% if appointment.customer_note %}: "{{ appointment.customer_note }}"{% endif %}</p>
+  {% if appointment.scheduled_start %}<p>Scheduled {{ appointment.scheduled_start|date:"D j M H:i" }} with {{ appointment.broker }} · fee UGX {{ appointment.fee_ugx|intcomma }}{% if appointment.payment_due_at and appointment.status == "awaiting_payment" %} · pay by {{ appointment.payment_due_at|date:"D H:i" }}{% endif %}</p>{% endif %}
+  {% if appointment.closed_reason or appointment.closed_note %}<p class="small muted">{{ appointment.get_closed_reason_display }} {{ appointment.closed_note }}</p>{% endif %}
+
+  {% if appointment.status == "requested" %}
+    <section class="card">
+      <h2>Confirm</h2>
+      <p class="small muted">Call the property contact to confirm access and check the broker can attend first.</p>
+      <form method="post" novalidate>{% csrf_token %}<input type="hidden" name="form" value="confirm">
+        {% with form=confirm_form %}{% include "partials/form_fields.html" %}{% endwith %}
+        <button class="button" type="submit">Confirm and ask the customer to pay</button></form>
+    </section>
+    <section class="card">
+      <h2>Decline</h2>
+      <form method="post">{% csrf_token %}<input type="hidden" name="form" value="decline">
+        {% with form=close_form %}{% include "partials/form_fields.html" %}{% endwith %}
+        <button class="button" type="submit">Decline (no charge)</button></form>
+    </section>
+  {% elif appointment.status == "awaiting_payment" or appointment.status == "booked" %}
+    <section class="card">
+      <h2>Reschedule</h2>
+      <form method="post" novalidate>{% csrf_token %}<input type="hidden" name="form" value="reschedule">
+        {% with form=confirm_form %}{% include "partials/form_fields.html" %}{% endwith %}
+        <button class="button" type="submit">Reschedule</button></form>
+    </section>
+    <section class="card">
+      <h2>Cancel</h2>
+      {% if appointment.status == "booked" %}<p class="small">It's paid, so cancelling requests a full refund for finance to pay out.</p>{% endif %}
+      <form method="post">{% csrf_token %}<input type="hidden" name="form" value="cancel">
+        {% with form=close_form %}{% include "partials/form_fields.html" %}{% endwith %}
+        <button class="button" type="submit">Cancel viewing</button></form>
+    </section>
+  {% endif %}
+
+  {% if payments %}
+    <h2>Payments</h2>
+    <ul class="small">{% for p in payments %}<li>{{ p.reference }} · {{ p.provider }} · UGX {{ p.amount_ugx|intcomma }} · {{ p.get_status_display }}{% if p.provider_txn_id %} · txn {{ p.provider_txn_id }}{% endif %}{% if p.refund %} · refund {{ p.refund.get_status_display }}{% endif %}</li>{% endfor %}</ul>
+  {% endif %}
+  {% if report %}
+    <h2>Broker report</h2>
+    <p class="small">Attended: {{ report.customer_attended|yesno }} · Matched listing: {{ report.property_as_listed|yesno }} · {{ report.get_customer_interest_display }}</p>
+    {% if report.discrepancy_note %}<p class="notice">{{ report.discrepancy_note }}</p>{% endif %}
+    {% if report.notes %}<p class="small">{{ report.notes }}</p>{% endif %}
+  {% endif %}
+  {% if feedback %}<h2>Customer feedback</h2><p>{{ feedback.rating }}/5 {{ feedback.comment }}</p>{% endif %}
+{% endblock %}

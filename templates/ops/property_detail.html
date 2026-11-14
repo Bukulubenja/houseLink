@@ -1,0 +1,69 @@
+{% extends "ops/base.html" %}
+{% load humanize %}
+{% block title %}{{ property.title }}{% endblock %}
+{% block ops %}
+  <h1>{{ property.title }} <span class="badge">{{ property.get_status_display }}</span></h1>
+  <p class="muted">{{ property.area }} · {{ property.location_hint }} · UGX {{ property.rent_ugx|intcomma }} ·
+    {{ property.get_kind_display }} · {{ property.bedrooms }} bed</p>
+  <p class="small">Contact: {{ property.contact }} · {{ property.contact.phone }}
+    {% if property.contact.landlord_profile and property.contact.landlord_profile.is_id_verified %}<span class="badge badge-ok">ID verified</span>{% endif %}
+    · Sourced by {{ property.sourced_by }}
+    {% if property.authority_document %} · <a href="{% url 'ops:authority_document' property.pk %}">Written permission</a>{% else %} · <span class="badge badge-warn">No written permission on file</span>{% endif %}</p>
+  <p class="small">Directions (private): {{ property.directions }}</p>
+  {% if property.last_verified_at %}<p class="small">Last verified {{ property.last_verified_at|date:"j M Y" }}; recheck due {{ property.recheck_due_at|date:"j M Y" }}.</p>{% endif %}
+  {% if can_edit %}<p><a href="{% url 'ops:property_edit' property.pk %}">Edit details</a> <span class="small muted">(pause first if published; edits need a new inspection)</span></p>{% endif %}
+
+  <h2>Photos ({{ property.photos.count }})</h2>
+  <div class="doc-grid">{% for photo in property.photos.all %}<figure><img src="{{ photo.image.url }}" alt=""><figcaption>{{ photo.caption }}</figcaption></figure>{% endfor %}</div>
+  {% if can_photo %}
+    <form method="post" enctype="multipart/form-data" class="card">{% csrf_token %}
+      <input type="hidden" name="form" value="photo">
+      {% with form=photo_form %}{% include "partials/form_fields.html" %}{% endwith %}
+      <button class="button" type="submit">Add photo</button>
+    </form>
+  {% endif %}
+
+  {% if pending %}
+    <section class="card">
+      <h2>Inspection awaiting approval</h2>
+      <p class="small">By {{ pending.verified_by }} on {{ pending.checked_at|date:"j M Y H:i" }}</p>
+      <ul class="checks">{% for item in pending.checked_items %}<li>{{ item }}</li>{% endfor %}</ul>
+      {% if pending.notes %}<p class="small">{{ pending.notes }}</p>{% endif %}
+      {% if can_decide %}
+        <form method="post">{% csrf_token %}
+          <input type="hidden" name="form" value="decide">
+          {% with form=decision_form %}{% include "partials/form_fields.html" %}{% endwith %}
+          <button class="button" type="submit">Save decision</button>
+        </form>
+      {% else %}
+        <p class="small muted">Someone with the approval role who neither sourced nor inspected this listing must approve it.</p>
+      {% endif %}
+    </section>
+  {% elif can_verify and property.status != "rented" %}
+    <section class="card">
+      <h2>Record an inspection</h2>
+      <p class="small muted">Confirm every item on site. A different person approves it.</p>
+      <form method="post" novalidate>{% csrf_token %}
+        <input type="hidden" name="form" value="verify">
+        {% with form=verify_form %}{% include "partials/form_fields.html" %}{% endwith %}
+        <button class="button" type="submit">Submit inspection</button>
+      </form>
+    </section>
+  {% endif %}
+
+  {% if property.status == "published" or property.status == "paused" or property.status == "expired" %}
+    <section class="card">
+      <h2>Availability</h2>
+      <form method="post">{% csrf_token %}
+        <input type="hidden" name="form" value="availability">
+        {% with form=availability_form %}{% include "partials/form_fields.html" %}{% endwith %}
+        <button class="button" type="submit">Update</button>
+      </form>
+    </section>
+  {% endif %}
+
+  {% if history %}
+    <h2>Inspection history</h2>
+    <ul class="small">{% for v in history %}<li>{{ v.checked_at|date:"j M Y" }} by {{ v.verified_by }}: {{ v.get_decision_display }}{% if v.decided_by %} by {{ v.decided_by }}{% endif %}{% if v.decision_note %} ({{ v.decision_note }}){% endif %}</li>{% endfor %}</ul>
+  {% endif %}
+{% endblock %}

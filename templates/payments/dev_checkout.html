@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Simulated checkout{% endblock %}
+{% block content %}
+  <section class="card narrow">
+    <h1>Simulated checkout</h1>
+    <p class="notice">Development only. This page stands in for the payment provider and
+      reports back through the signed webhook.</p>
+    <p>{{ payment.reference }} · UGX {{ payment.amount_ugx|intcomma }}</p>
+    <form method="post">{% csrf_token %}
+      <button class="button" name="result" value="succeed" type="submit">Simulate success</button>
+      <button class="button" name="result" value="fail" type="submit">Simulate failure</button>
+    </form>
+  </section>
+{% endblock %}

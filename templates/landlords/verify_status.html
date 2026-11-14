@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Identity check{% endblock %}
+{% block content %}
+  <section class="card narrow">
+    <h1>Identity check</h1>
+    {% if profile.identity_status == "pending" %}
+      <p><span class="badge">Waiting for review</span></p>
+      <p class="muted">We usually review within 24 hours and will text you the result.</p>
+    {% elif profile.identity_status == "approved" %}
+      <p><span class="badge badge-ok">ID verified</span></p>
+      <p class="muted">Verified {{ profile.id_verified_at|date:"j M Y" }}. Our property team
+        will contact you to inspect your home and agree in writing before we list it.</p>
+    {% else %}
+      <p class="muted">We can't accept an application from this account. Please contact
+        Crib Link support.</p>
+    {% endif %}
+  </section>
+{% endblock %}

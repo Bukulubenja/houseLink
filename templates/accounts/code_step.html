@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Enter code{% endblock %}
+{% block content %}
+  <section class="card narrow">
+    <h1>Enter your code</h1>
+    <p class="muted">We sent it to {{ masked_phone }}. It expires in 5 minutes.</p>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "partials/form_errors.html" %}
+      <label for="{{ form.code.id_for_label }}">{{ form.code.label }}</label>
+      {{ form.code }}
+      {% for error in form.code.errors %}<p class="error">{{ error }}</p>{% endfor %}
+      <button class="button" type="submit">Continue</button>
+    </form>
+    <p class="muted small"><a href="{% url 'accounts:login' %}">Wrong number or no SMS? Start again</a></p>
+  </section>
+{% endblock %}

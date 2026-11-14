@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Find a home. View it with confidence.{% endblock %}
+{% block content %}
+  <section class="hero">
+    <h1>Find a home.<br>View it with confidence.</h1>
+    <p class="muted">Verified rental options in Ntinda. Organised appointments. A Crib Link
+      broker to guide your viewing.</p>
+    <p><a class="button" href="{% url 'listings:list' %}">Browse available homes</a></p>
+  </section>
+
+  <section class="steps">
+    <h2>How a viewing works</h2>
+    <ol>
+      <li><strong>We check the home first.</strong> Our team inspects every listing and confirms
+        the owner's permission, the rent, the location and that it's available. Each listing
+        shows what was checked and when.</li>
+      <li><strong>You request a time.</strong> Nothing to pay yet.</li>
+      <li><strong>We confirm it.</strong> We arrange access with the property and a broker, then
+        text you the confirmed time and the viewing fee.</li>
+      <li><strong>You pay to secure the slot.</strong> Your booking is confirmed only once the
+        payment provider confirms your payment.</li>
+      <li><strong>A broker meets you there</strong> and guides the viewing. Afterwards we follow
+        up and can suggest similar verified homes.</li>
+    </ol>
+    <p class="small muted">Verification means our team checked the details listed on the date
+      shown. It isn't a legal guarantee. If anything is wrong, tell us and we'll act on it.</p>
+  </section>
+
+  <section class="card owner-cta">
+    <h2>Own a rental in Ntinda?</h2>
+    <p class="muted">Our property team visits, checks it and lists it for you. You can start by
+      verifying your identity.</p>
+    {% if user.is_authenticated %}
+      <a href="{% url 'landlords:verify' %}">Verify your identity</a>
+    {% else %}
+      <a href="{% url 'accounts:login' %}?next={% url 'landlords:verify' %}">Sign in to get started</a>
+    {% endif %}
+  </section>
+{% endblock %}

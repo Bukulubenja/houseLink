@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block content %}
+  <section class="card narrow">
+    <h1>Sign in or create an account</h1>
+    <p class="muted">We'll text you a 6-digit code. Standard SMS only — no passwords.</p>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "partials/form_errors.html" %}
+      <label for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
+      {{ form.phone }}
+      {% for error in form.phone.errors %}<p class="error">{{ error }}</p>{% endfor %}
+      <button class="button" type="submit">Send code</button>
+    </form>
+  </section>
+{% endblock %}

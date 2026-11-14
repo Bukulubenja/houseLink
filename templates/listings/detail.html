@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ property.title }}{% endblock %}
+{% block content %}
+  <article>
+    <h1>{{ property.title }}</h1>
+    <p class="muted">{{ property.location_hint }} · {{ property.area }}</p>
+    <p><strong>UGX {{ property.rent_ugx|intcomma }}</strong> / month ·
+      {{ property.get_kind_display }} · {{ property.bedrooms }} bed · {{ property.bathrooms }} bath
+      {% if property.furnished %}· Furnished{% endif %}</p>
+
+    {% if property.photos.all %}
+      <div class="doc-grid">
+        {% for photo in property.photos.all %}
+          <figure><img src="{{ photo.image.url }}" alt="{{ photo.caption|default:property.title }}" loading="lazy">
+            {% if photo.caption %}<figcaption>{{ photo.caption }}</figcaption>{% endif %}</figure>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if property.description %}<p>{{ property.description|linebreaksbr }}</p>{% endif %}
+
+    <section class="card">
+      <h2>What we checked</h2>
+      <p class="small muted">Inspected by the Crib Link team on
+        {{ property.last_verified_at|date:"j M Y" }}. Next recheck by
+        {{ property.recheck_due_at|date:"j M Y" }}.</p>
+      {% if verification %}
+        <ul class="checks">{% for item in verification.checked_items %}<li>{{ item }}</li>{% endfor %}</ul>
+      {% endif %}
+      <p class="small muted">This is our team's check on that date, not a legal guarantee.
+        Spotted something wrong? Tell your broker or our support line.</p>
+    </section>
+
+    <section class="card">
+      <h2>View this home</h2>
+      <p>Request a time. We confirm it with the property and a broker before you pay anything.
+        A broker meets you there and guides the viewing.</p>
+      <a class="button" href="{% url 'bookings:request' property.pk %}">Request a viewing</a>
+    </section>
+  </article>
+{% endblock %}

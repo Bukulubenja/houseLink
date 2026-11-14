@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Available homes{% endblock %}
+{% block content %}
+  <h1>Available homes</h1>
+  <p class="muted">Every home here was inspected by our team; each listing shows when.</p>
+
+  <form method="get" class="filters card">
+    {% for field in form %}
+      <div><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}</div>
+    {% endfor %}
+    <div><button class="button" type="submit">Search</button></div>
+  </form>
+
+  {% if page.object_list %}
+    <ul class="grid">
+      {% for home in page.object_list %}
+        <li class="card listing-card">
+          <a href="{% url 'listings:detail' home.pk %}">
+            {% with photo=home.photos.all|first %}
+              {% if photo %}<img src="{{ photo.image.url }}" alt="{{ home.title }}" loading="lazy">{% endif %}
+            {% endwith %}
+            <h2>{{ home.title }}</h2>
+          </a>
+          <p><strong>UGX {{ home.rent_ugx|intcomma }}</strong> / month</p>
+          <p class="small muted">{{ home.get_kind_display }} · {{ home.bedrooms }} bed · {{ home.area }}</p>
+          <p class="small"><span class="badge badge-ok">Checked {{ home.last_verified_at|date:"j M" }}</span></p>
+        </li>
+      {% endfor %}
+    </ul>
+    {% if page.has_other_pages %}
+      <p>{% if page.has_previous %}<a href="?{{ query }}&page={{ page.previous_page_number }}">Previous</a>{% endif %}
+        Page {{ page.number }} of {{ page.paginator.num_pages }}
+        {% if page.has_next %}<a href="?{{ query }}&page={{ page.next_page_number }}">Next</a>{% endif %}</p>
+    {% endif %}
+  {% else %}
+    <p class="muted">No verified homes match that search right now. Try widening it, or check back
+      soon. We add homes only after inspecting them.</p>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "ops/base.html" %}
+{% block title %}Operations{% endblock %}
+{% block ops %}
+  <h1>Operations</h1>
+  <ul class="queue">
+    <li class="card queue-item"><a href="{% url 'ops:property_list' %}">Inspections awaiting approval</a> <span class="badge">{{ queues.awaiting_approval }}</span></li>
+    <li class="card queue-item"><a href="{% url 'ops:booking_queue' %}">New viewing requests</a> <span class="badge">{{ queues.requests }}</span></li>
+    <li class="card queue-item"><a href="{% url 'ops:finance' %}">Awaiting payment</a> <span class="badge">{{ queues.awaiting_payment }}</span></li>
+    <li class="card queue-item"><a href="{% url 'ops:finance' %}">Refunds to pay out</a> <span class="badge{% if queues.refunds %} badge-warn{% endif %}">{{ queues.refunds }}</span></li>
+    {% if queues.mismatches %}<li class="card queue-item"><a href="{% url 'ops:finance' %}">Payment amount mismatches</a> <span class="badge badge-warn">{{ queues.mismatches }}</span></li>{% endif %}
+  </ul>
+
+  <h2>Last 7 days</h2>
+  <table class="table">
+    <thead><tr><th>Measure</th><th>Value</th><th>Why it matters</th></tr></thead>
+    <tbody>
+      {% for m in metrics %}<tr><td>{{ m.label }}</td><td><strong>{{ m.value }}</strong></td><td class="small muted">{{ m.why }}</td></tr>{% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "ops/base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block ops %}
+  <section class="card narrow">
+    <h1>{{ title }}</h1>
+    <form method="post" novalidate{% if multipart %} enctype="multipart/form-data"{% endif %}>
+      {% csrf_token %}
+      {% include "partials/form_fields.html" %}
+      <button class="button" type="submit">Save</button>
+    </form>
+  </section>
+{% endblock %}
