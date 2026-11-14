@@ -83,6 +83,11 @@ class Appointment(PublicModel):
     checked_in_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     reminder_sent_at = models.DateTimeField(null=True, blank=True)
+    needs_new_broker = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Set when the assigned broker is suspended; cleared on reassignment.",
+    )
 
     class Meta:
         ordering = ["-created_at"]

@@ -26,6 +26,13 @@
     </section>
   {% elif appointment.status == "awaiting_payment" or appointment.status == "booked" %}
     <section class="card">
+      <h2>Change broker (same time)</h2>
+      {% if appointment.needs_new_broker %}<p class="notice">The assigned broker was suspended. Assign someone else.</p>{% endif %}
+      <form method="post">{% csrf_token %}<input type="hidden" name="form" value="reassign">
+        {% with form=reassign_form %}{% include "partials/form_fields.html" %}{% endwith %}
+        <button class="button" type="submit">Assign new broker</button></form>
+    </section>
+    <section class="card">
       <h2>Reschedule</h2>
       <form method="post" novalidate>{% csrf_token %}<input type="hidden" name="form" value="reschedule">
         {% with form=confirm_form %}{% include "partials/form_fields.html" %}{% endwith %}

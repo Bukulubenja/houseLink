@@ -320,6 +320,7 @@ def reschedule(
         appointment.broker = broker
         appointment.reminder_sent_at = None
         appointment.checked_in_at = None
+        appointment.needs_new_broker = False
         if appointment.status == Status.AWAITING_PAYMENT:
             appointment.payment_due_at = _payment_due(scheduled_start)
         appointment.save()
@@ -342,6 +343,69 @@ def reschedule(
                 _sms(old_broker.user.phone, f"Crib Link: {appointment.reference} was reassigned.")
             _sms(broker.user.phone, _broker_assignment_text(appointment))
     return appointment
+
+
+def reassign_broker(*, actor: User, appointment: Appointment, broker: BrokerProfile) -> Appointment:
+    """Swap the broker but keep the time. Unlike `reschedule`, this works for viewings starting
+    soon, which is exactly when a suspended broker's viewings need covering."""
+    require_role(actor, Role.BOOKINGS)
+    with transaction.atomic():
+        appointment = _lock(appointment)
+        if appointment.status not in SLOT_HOLDING_STATUSES:
+            raise BookingError("Only confirmed or booked viewings can get a new broker.")
+        if appointment.scheduled_start <= timezone.now():
+            raise BookingError("This viewing has already started; reschedule or cancel it.")
+        if appointment.broker_id == broker.pk:
+            raise BookingError("Choose a different broker.")
+        old_broker = appointment.broker
+        broker = _claim_broker(broker, appointment.scheduled_start, appointment)
+        appointment.broker = broker
+        appointment.needs_new_broker = False
+        appointment.checked_in_at = None
+        appointment.reminder_sent_at = None
+        appointment.save()
+        record(
+            actor=actor,
+            action="appointment.broker_reassigned",
+            target=appointment,
+            evidence={"from": str(old_broker.pk) if old_broker else None, "to": str(broker.pk)},
+        )
+        if appointment.status == Status.BOOKED:
+            _sms(broker.user.phone, _broker_assignment_text(appointment))
+            _sms(
+                appointment.customer.phone,
+                f"Crib Link: {appointment.reference} is unchanged at "
+                f"{_fmt(appointment.scheduled_start)}; your broker is now "
+                f"{broker_name(appointment)}.",
+            )
+            if old_broker is not None:
+                _sms(old_broker.user.phone, f"Crib Link: {appointment.reference} was reassigned.")
+    return appointment
+
+
+def flag_for_new_broker(*, broker: BrokerProfile, actor: User) -> int:
+    """Called when a broker is suspended: their upcoming viewings need someone else.
+
+    The broker can no longer check in (inactive brokers are refused), so without this the
+    viewing would silently stall. Returns how many viewings were flagged."""
+    upcoming = Appointment.objects.select_for_update().filter(
+        broker=broker,
+        status__in=SLOT_HOLDING_STATUSES,
+        scheduled_start__gt=timezone.now() - CHECK_IN_LATE,
+        needs_new_broker=False,
+    )
+    flagged = 0
+    for appointment in upcoming:
+        appointment.needs_new_broker = True
+        appointment.save(update_fields=["needs_new_broker", "updated_at"])
+        record(
+            actor=actor,
+            action="appointment.needs_new_broker",
+            target=appointment,
+            evidence={"broker": str(broker.pk)},
+        )
+        flagged += 1
+    return flagged
 
 
 # --- Payment hook (called by payments.services only) -------------------------------

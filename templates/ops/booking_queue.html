@@ -2,6 +2,16 @@
 {% block title %}Booking desk{% endblock %}
 {% block ops %}
   <h1>Booking desk</h1>
+  {% if needs_broker %}
+    <h2>Needs a new broker ({{ needs_broker|length }})</h2>
+    <ul class="queue">
+      {% for a in needs_broker %}
+        <li class="card queue-item overdue"><a href="{% url 'ops:booking_detail' a.pk %}"><strong>{{ a.reference }}</strong></a>
+          <span>{{ a.scheduled_start|date:"D j M H:i" }} · {{ a.property.title }}</span>
+          <span class="badge badge-warn">Broker suspended</span></li>
+      {% endfor %}
+    </ul>
+  {% endif %}
   <h2>New requests ({{ requested|length }})</h2>
   <ul class="queue">
     {% for a in requested %}

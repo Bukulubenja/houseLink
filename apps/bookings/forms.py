@@ -47,6 +47,14 @@ class ConfirmForm(forms.Form):
         self.fields["broker"].queryset = _active_brokers()
 
 
+class ReassignForm(forms.Form):
+    broker = forms.ModelChoiceField(queryset=BrokerProfile.objects.none(), label="New broker")
+
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["broker"].queryset = _active_brokers()
+
+
 class CloseForm(forms.Form):
     reason = forms.ChoiceField(
         choices=[c for c in Appointment.CancelReason.choices if c[0] != "customer"]

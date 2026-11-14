@@ -124,6 +124,9 @@ def queue_counts() -> dict[str, int]:
         + Property.objects.filter(
             status=Property.Status.PUBLISHED, verifications__decision="pending"
         ).count(),
+        "needs_broker": Appointment.objects.filter(
+            needs_new_broker=True, status__in=[S.AWAITING_PAYMENT, S.BOOKED]
+        ).count(),
         "requests": Appointment.objects.filter(status=S.REQUESTED).count(),
         "awaiting_payment": Appointment.objects.filter(status=S.AWAITING_PAYMENT).count(),
         "refunds": Refund.objects.filter(status=Refund.Status.REQUESTED).count(),

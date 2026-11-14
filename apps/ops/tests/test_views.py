@@ -258,3 +258,24 @@ def test_finance_mismatch_held_and_settled(client, finance_user, make_staff, awa
     client.post(url, {"decision": "accept", "note": "Customer topped up in cash"})
     awaiting_payment.refresh_from_db()
     assert awaiting_payment.status == Appointment.Status.BOOKED
+
+
+def test_suspended_broker_viewing_surfaces_and_is_reassigned(
+    client, coordinator, booked, broker, make_broker
+):
+    client.force_login(coordinator)
+    client.post(
+        reverse("ops:broker_status", args=[broker.pk]),
+        {"status": "suspended", "reason": "Late twice"},
+    )
+    assert b"Viewings needing a new broker" in client.get(reverse("ops:dashboard")).content
+    queue = client.get(reverse("ops:booking_queue"))
+    assert b"Needs a new broker" in queue.content
+    detail = reverse("ops:booking_detail", args=[booked.pk])
+    assert b"The assigned broker was suspended" in client.get(detail).content
+
+    replacement = make_broker("Ruth")
+    client.post(detail, {"form": "reassign", "broker": replacement.pk})
+    booked.refresh_from_db()
+    assert booked.broker == replacement
+    assert b"Needs a new broker" not in client.get(reverse("ops:booking_queue")).content

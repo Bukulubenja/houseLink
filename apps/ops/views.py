@@ -16,7 +16,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from apps.audit.services import record
 from apps.bookings import services as bookings
-from apps.bookings.forms import CloseForm, ConfirmForm
+from apps.bookings.forms import CloseForm, ConfirmForm, ReassignForm
 from apps.bookings.models import Appointment
 from apps.brokers import services as brokers
 from apps.brokers.models import BrokerProfile
@@ -294,6 +294,9 @@ def booking_queue(request: HttpRequest) -> HttpResponse:
         request,
         "ops/booking_queue.html",
         {
+            "needs_broker": base.filter(
+                needs_new_broker=True, status__in=[S.AWAITING_PAYMENT, S.BOOKED]
+            ).order_by("scheduled_start"),
             "requested": base.filter(status=S.REQUESTED).order_by("created_at"),
             "awaiting_payment": base.filter(status=S.AWAITING_PAYMENT).order_by("payment_due_at"),
             "booked": base.filter(status=S.BOOKED).order_by("scheduled_start"),
@@ -317,6 +320,7 @@ def booking_detail(request: HttpRequest, pk: str) -> HttpResponse:
         else ConfirmForm(initial=initial)
     )
     close_form = CloseForm(request.POST) if action in {"decline", "cancel"} else CloseForm()
+    reassign_form = ReassignForm(request.POST) if action == "reassign" else ReassignForm()
 
     done = False
     if action in {"confirm", "reschedule"} and confirm_form.is_valid():
@@ -329,6 +333,20 @@ def booking_detail(request: HttpRequest, pk: str) -> HttpResponse:
                     actor=request.user, appointment=appointment, **confirm_form.cleaned_data
                 ),
                 "Saved. The customer has been texted.",
+            )
+            is not FAILED
+        )
+    elif action == "reassign" and reassign_form.is_valid():
+        done = (
+            _attempt(
+                request,
+                reassign_form,
+                lambda: bookings.reassign_broker(
+                    actor=request.user,
+                    appointment=appointment,
+                    broker=reassign_form.cleaned_data["broker"],
+                ),
+                "New broker assigned and texted.",
             )
             is not FAILED
         )
@@ -355,6 +373,7 @@ def booking_detail(request: HttpRequest, pk: str) -> HttpResponse:
             "appointment": appointment,
             "confirm_form": confirm_form,
             "close_form": close_form,
+            "reassign_form": reassign_form,
             "payments": appointment.payments.all(),
             "report": getattr(appointment, "report", None),
             "feedback": getattr(appointment, "feedback", None),

@@ -4,6 +4,7 @@
   <h1>Operations</h1>
   <ul class="queue">
     <li class="card queue-item"><a href="{% url 'ops:property_list' %}">Inspections awaiting approval</a> <span class="badge">{{ queues.awaiting_approval }}</span></li>
+    {% if queues.needs_broker %}<li class="card queue-item overdue"><a href="{% url 'ops:booking_queue' %}">Viewings needing a new broker</a> <span class="badge badge-warn">{{ queues.needs_broker }}</span></li>{% endif %}
     <li class="card queue-item"><a href="{% url 'ops:booking_queue' %}">New viewing requests</a> <span class="badge">{{ queues.requests }}</span></li>
     <li class="card queue-item"><a href="{% url 'ops:finance' %}">Awaiting payment</a> <span class="badge">{{ queues.awaiting_payment }}</span></li>
     <li class="card queue-item"><a href="{% url 'ops:finance' %}">Refunds to pay out</a> <span class="badge{% if queues.refunds %} badge-warn{% endif %}">{{ queues.refunds }}</span></li>

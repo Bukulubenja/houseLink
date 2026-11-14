@@ -5,6 +5,7 @@ from django.db import transaction
 
 from apps.accounts.models import User
 from apps.audit.services import record
+from apps.bookings import services as bookings
 from apps.core.phone import normalize_phone
 from apps.core.roles import Role, require_role
 
@@ -67,11 +68,14 @@ def set_broker_status(
         previous = broker.status
         broker.status = status
         broker.save(update_fields=["status", "updated_at"])
+        flagged = 0
+        if status == BrokerProfile.Status.SUSPENDED:
+            flagged = bookings.flag_for_new_broker(broker=broker, actor=actor)
         record(
             actor=actor,
             action=f"broker.{status}",
             target=broker,
-            evidence={"previous": previous, "reason": reason},
+            evidence={"previous": previous, "reason": reason, "viewings_flagged": flagged},
         )
     return broker
 
